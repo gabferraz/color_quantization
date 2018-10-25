@@ -1,1 +1,1 @@
-#Color Quantization with Clustering
+# Color Quantization with Clustering
