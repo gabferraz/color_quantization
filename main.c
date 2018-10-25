@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <strings.h>
-#include "qdbmp.h"
-#include "convert.h"
-#include "color_cluster.h"
+#include "headers/qdbmp.h"
+#include "headers/convert.h"
+#include "headers/color_cluster.h"
 
 int main(int argc, char **argv) {
 	UINT width, height;
@@ -47,8 +47,11 @@ int main(int argc, char **argv) {
 	//Chosing between sRGB and CIE-lab
 	if(argv[5][2] == 'g'){ 
 		clusterizeRGB(img_input, img_output, clusters, k);
+		for(int i = 0; i < k; i++) {
+			printf("Custo total do Cluster %d: %f\n", i, clusters[i].custoTotal);
+		}
 	}
-	DIFFUSER_REFERENCE dif;
+	/*DIFFUSER_REFERENCE dif;
 	if(argv[5][2] == 'a'){
 		printf("Escolha uma referencia de difusor:\n" 
 			"0-)A\t5-)D65\t10-)F3\t15-)F8\n"
@@ -63,7 +66,7 @@ int main(int argc, char **argv) {
 			puts("Entrada invalida."); 
 			return -1;
 		}
-	} else return -1;
+	} else return -1;*/
 	
 
 	BMP_WriteFile(img_output, argv[3]);

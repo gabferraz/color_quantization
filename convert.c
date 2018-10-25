@@ -1,5 +1,5 @@
 #include <math.h>
-#include "convert.h"
+#include "headers/convert.h"
 
 //Set the reference values of a reflecting diffuser.
 void getReference(double *refX, double *refY, double *refZ, DIFFUSER_REFERENCE diffuser){
