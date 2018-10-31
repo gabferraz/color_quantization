@@ -4,6 +4,7 @@
 #include "headers/qdbmp.h"
 #include "headers/convert.h"
 #include "headers/color_cluster.h"
+#include "headers/heuristic.h"
 
 int main(int argc, char **argv) {
 	UINT width, height;
@@ -31,7 +32,8 @@ int main(int argc, char **argv) {
 		for(int i = 0; i < k; i++){ 
 			RandomCluster(img_input, &clusters[i]);
 			printf("Cluster %d: {%ld,%ld} R=%d, G=%d, B=%d\n", i, clusters[i].root.x, clusters[i].root.y, 
-				clusters[i].root.R, clusters[i].root.G, clusters[i].root.B);
+			clusters[i].root.R, clusters[i].root.G, clusters[i].root.B);
+
 		}
 	}
 	int in_x, in_y;
@@ -45,13 +47,14 @@ int main(int argc, char **argv) {
 	}
 
 	//Chosing between sRGB and CIE-lab
-	if(argv[5][2] == 'g'){ 
+	/*if(argv[5][2] == 'g'){ 
 		clusterizeRGB(img_input, img_output, clusters, k);
 		for(int i = 0; i < k; i++) {
 			printf("Custo total do Cluster %d: %f\n", i, clusters[i].custoTotal);
 		}
-	}
-	/*DIFFUSER_REFERENCE dif;
+	}*/
+
+	DIFFUSER_REFERENCE dif;
 	if(argv[5][2] == 'a'){
 		printf("Escolha uma referencia de difusor:\n" 
 			"0-)A\t5-)D65\t10-)F3\t15-)F8\n"
@@ -59,14 +62,21 @@ int main(int argc, char **argv) {
 			"2-)C \t7-)E \t12-)F5\t17-)F10\n"
 			"3-)D50\t8-)F1\t13-)F6\t18-)F11\n"
 			"4-)D55\t9-)F2\t14-)F7\t19-)F12\n");
-		scanf("%d", &dif);
+		scanf("%u", &dif);
 		printf("%d\n", dif);
-	     	if(dif >= 0 && dif <= 19) clusterizeLAB(img_input, img_output, clusters, k, dif);
-		else{ 
+	    if(dif >= 0 && dif <= 19) {
+	    	clusterizeLAB(img_input, img_output, clusters, k, dif);
+	    	VND(img_input, img_output, clusters,k, dif);
+	    	printf("Cluster %d: {%ld,%ld} R=%d, G=%d, B=%d\n", 0, clusters[0].root.x, clusters[0].root.y, 
+			clusters[0].root.R, clusters[0].root.G, clusters[0].root.B);
+	    	//for (int v = 0; v < clusters[0].nodes.length; v++){
+	    	//	printf ("AQUI: %f\n",clusters[0].nodes.data[v]->distancia);
+	    	//}
+		} else { 
 			puts("Entrada invalida."); 
 			return -1;
 		}
-	} else return -1;*/
+	} else return -1;
 	
 
 	BMP_WriteFile(img_output, argv[3]);

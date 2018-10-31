@@ -2,6 +2,8 @@
 #define COLOR_CLUSTER_H_
 #include "qdbmp.h"
 #include "convert.h"
+#include "vec.h"
+
 typedef struct {
 	UCHAR R;
 	UCHAR G;
@@ -10,9 +12,12 @@ typedef struct {
 	UINT y;
 	double distancia;
 } tPixel;
+
+typedef vec_t(tPixel*) pixels_vector;
+
 typedef struct {
 	tPixel root;
-	tPixel *nodes;
+	pixels_vector nodes;
 	double custoTotal;
 } tCluster;
 

@@ -4,6 +4,7 @@
 #include <limits.h>
 #include <time.h>
 #include "headers/color_cluster.h"
+#include "headers/vec.h"
 
 void RandomCluster(BMP* image, tCluster *cluster){
 	int size_x = BMP_GetWidth(image);
@@ -18,12 +19,12 @@ void RandomCluster(BMP* image, tCluster *cluster){
 	cluster->root.R = R;
 	cluster->root.G = G;
 	cluster->root.B = B;
-	cluster->nodes = NULL;
+	vec_init(&(cluster->nodes));
 	cluster->custoTotal = 0;
 }
 
 void SelectedCluster(BMP* image, int x, int y, tCluster *cluster){
-        cluster->root.x = x;
+    cluster->root.x = x;
 	cluster->root.y = y;
 	
 	UCHAR R, G, B;
@@ -32,7 +33,7 @@ void SelectedCluster(BMP* image, int x, int y, tCluster *cluster){
         cluster->root.R = R;
         cluster->root.G = G;
         cluster->root.B = B;
-	cluster->nodes = NULL;
+		//cluster->nodes = NULL;
 }
 
 void setPixel(tPixel *pixel, UCHAR R, UCHAR G, UCHAR B, UINT x, UINT y, double distancia){
@@ -74,11 +75,11 @@ void clusterizeRGB(BMP *image, BMP *img_output, tCluster *clusters, int K){
 			
 			for(int i = 0; i < K; i++) {
 				if(x == clusters[i].root.x && y == clusters[i].root.y) cluster_flag = 1;
-				break;
+				continue;
 			}
 			if(cluster_flag == 1) {
 				BMP_SetPixelRGB(img_output, x, y, r, g, b);
-				break;
+				continue;
 			}
 
 			for(int d = 0; d < K; d++) {
@@ -86,9 +87,10 @@ void clusterizeRGB(BMP *image, BMP *img_output, tCluster *clusters, int K){
 				if(dist < min_dist){ 
 					min_dist = dist;
 					last_cluster = d;
+					printf("Ultimo Cluster:%d\n",last_cluster );
 				}
 			}
-			if(clusters[last_cluster].nodes == NULL) {
+			/*if(clusters[last_cluster].nodes == NULL) {
 				clusters[last_cluster].nodes = (tPixel*) malloc(sizeof(tPixel));
 				setPixel(clusters[last_cluster].nodes, r, g, b, x, y, min_dist);
 				clusters[last_cluster].custoTotal += min_dist;
@@ -99,42 +101,54 @@ void clusterizeRGB(BMP *image, BMP *img_output, tCluster *clusters, int K){
 					fprintf(stderr, "ERROR: Realloc failed.");
 				}
 				clusters[last_cluster].nodes = tmp;
-                                setPixel(clusters[last_cluster].nodes, r, g, b, x, y, min_dist);
+                setPixel(clusters[last_cluster].nodes, r, g, b, x, y, min_dist);
 				clusters[last_cluster].custoTotal += min_dist;
-			}
+			}*/
+			tPixel *tmp;
+			setPixel(tmp, r, g, b, x, y, min_dist);
+			clusters[last_cluster].custoTotal += min_dist;
+			vec_push(&(clusters[last_cluster].nodes), tmp);
+			
 			BMP_SetPixelRGB(img_output, x, y, clusters[last_cluster].root.R, clusters[last_cluster].root.G, clusters[last_cluster].root.B);
 		}
 	}
 }
 
 void clusterizeLAB(BMP *image, BMP *img_output, tCluster *clusters, int K, DIFFUSER_REFERENCE diffuser){
-        int size_x = BMP_GetWidth(image);
-        int size_y = BMP_GetHeight(image);
+    int size_x = BMP_GetWidth(image);
+    int size_y = BMP_GetHeight(image);
 	int min_dist, last_cluster, cluster_flag = 0;
 	UCHAR r, g, b;
 	double X, Y, Z;
-	double clusterX, clusterY, clusterZ;
+	double clusterX, clusterY, clusterZ, tempX, tempY, tempZ;
 	double CIE_l, CIE_a, CIE_b;
 	double clusterL, clusterA, clusterB;
+	int x = 0;
 
-	for(int x = 0; x < size_x; x++) {
+	for(x = 0; x < size_x; x++) {
+		//printf("valor de x: %d\n",x );
 		for(int y = 0; y < size_y; y++) {
+			//printf("valor de y: %d\n",y );
 			min_dist = INT_MAX;
 			cluster_flag = 0;
 			BMP_GetPixelRGB(image, x, y, &r, &g, &b);
 			
 			for(int i = 0; i < K; i++) {
 				if(x == clusters[i].root.x && y == clusters[i].root.y) cluster_flag = 1;
-				break;
+				continue;
 			}
 			if(cluster_flag == 1) {
 				BMP_SetPixelRGB(img_output, x, y, r, g, b);
-				break;
+				continue;
 			}
 
 			for(int d = 0; d < K; d++) {
 				sRGB2xyz(clusters[d].root.R, clusters[d].root.G, clusters[d].root.B, &clusterX, &clusterY, &clusterZ);
 				xyz2LAB(clusterX, clusterY, clusterZ, &clusterL, &clusterA, &clusterB, diffuser);
+				//Converter cores do pixel
+				sRGB2xyz(r, g, b, &tempX, &tempY, &tempZ);
+				xyz2LAB(tempX, tempY, tempZ, &CIE_l, &CIE_a, &CIE_b, diffuser);
+
 				double dist = getLabEuclideanDistance(clusterL, clusterA, clusterB, CIE_l, CIE_a, CIE_b);
 				if(dist < min_dist){ 
 					min_dist = dist;
@@ -142,18 +156,22 @@ void clusterizeLAB(BMP *image, BMP *img_output, tCluster *clusters, int K, DIFFU
 				}
 			}
 
-			if(clusters[last_cluster].nodes == NULL) {
+			/*if(clusters[last_cluster].nodes == NULL) { // EXECUTA 4 VEZES
 				clusters[last_cluster].nodes = (tPixel*) malloc(sizeof(tPixel));
 				setPixel(clusters[last_cluster].nodes, r, g, b, x, y, min_dist);
 			} else {
 				tPixel *tmp;
 				if((tmp = realloc(clusters[last_cluster].nodes, sizeof(clusters[last_cluster].nodes) + sizeof(tPixel))) == NULL)
-					fprintf(stderr, "ERROR: Realloc failed.");
+				fprintf(stderr, "ERROR: Realloc failed.");
 				clusters[last_cluster].nodes = tmp;
-                                setPixel(clusters[last_cluster].nodes, r, g, b, x, y, min_dist);
-			}
-			BMP_SetPixelRGB(img_output, x, y, clusters[last_cluster].root.R, clusters[last_cluster].root.G, 
-					clusters[last_cluster].root.B);
+                setPixel(clusters[last_cluster].nodes, r, g, b, x, y, min_dist);
+			}*/
+			//printf("cheguei aqui0.");
+			tPixel *tmp = malloc (sizeof(tPixel));
+			setPixel(tmp, r, g, b, x, y, min_dist);
+			clusters[last_cluster].custoTotal += min_dist;
+			vec_push(&(clusters[last_cluster].nodes), tmp);
+			BMP_SetPixelRGB(img_output, x, y, clusters[last_cluster].root.R, clusters[last_cluster].root.G,clusters[last_cluster].root.B);
 		}
 	}
 }

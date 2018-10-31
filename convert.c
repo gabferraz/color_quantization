@@ -92,9 +92,9 @@ void getReference(double *refX, double *refY, double *refZ, DIFFUSER_REFERENCE d
 
 //Convert sRGB color scheme to XYZ
 void sRGB2xyz(UCHAR sR, UCHAR sG, UCHAR sB, double *X, double *Y, double *Z){
-	double R = sR/255;
-	double G = sG/255;
-	double B = sB/255;
+	double R = (double)sR/255;
+	double G = (double)sG/255;
+	double B = (double)sB/255;
 
 	if (R > 0.04045) R = pow((R+0.055) / 1.055, 2.4);
 	else R = R / 12.92;
@@ -105,13 +105,16 @@ void sRGB2xyz(UCHAR sR, UCHAR sG, UCHAR sB, double *X, double *Y, double *Z){
 	if (B > 0.04045) B = pow((B+0.055) / 1.055, 2.4);
 	else B = B / 12.92;
 
-	R *= 100;
-	G *= 100;
-	B *= 100;
+	R *= (double)100;
+	G *= (double)100;
+	B *= (double)100;
+	//printf("%f %f %f\n",R,G,B );
 
-	*X = R*0.4124 + G*0.3576 + B*0.1805;
-	*Y = R*0.2126 + G*0.7152 + B*0.0722;
-	*Z = R*0.0193 + G*0.1192 + B*0.9505;
+	*X = (double) R*0.4124 + (double) G*0.3576 + (double) B*0.1805;
+	*Y = (double) R*0.2126 + (double) G*0.7152 + (double) B*0.0722;
+	*Z = (double) R*0.0193 + (double) G*0.1192 + (double) B*0.9505;
+	//printf("X Y Z %f %f %f\n",X,Y,Z );
+
 }
 
 //Convert XYZ color scheme to sRGB
@@ -143,19 +146,18 @@ void xyz2LAB(double X, double Y, double Z, double *CIE_l, double *CIE_a, double 
 	double refX, refY, refZ;
 	getReference(&refX, &refY, &refZ, diffuser);
 
-	double x = X/refX;
-	double y = Y/refY;
-	double z = Z/refZ;
+	double x = (double) X/refX;
+	double y = (double) Y/refY;
+	double z = (double) Z/refZ;
 
-        if (x > 0.008856) x = pow(x, 1/3);
-        else x = (7.787*x)  + (16/116);
+        if (x > 0.008856) x = pow(x, (double)1/3);
+        else x = (7.787*x) + (16/116);
 
-        if (y > 0.008856) y = pow(y, 1/3);
-        else y = (7.787*y)  + (16/116);
+        if (y > 0.008856) y = pow(y, (double)1/3);
+        else y = (7.787*y) + (16/116);
 
-        if (z > 0.008856) z = pow(z, 1/3);
-        else z = (7.787*z)  + (16/116);
-
+        if (z > 0.008856) z = pow(z, (double)1/3);
+        else z = (7.787*z) + (16/116);
 
 	*CIE_l = (116*y) - 16;
 	*CIE_a = 500 * (x - y);
